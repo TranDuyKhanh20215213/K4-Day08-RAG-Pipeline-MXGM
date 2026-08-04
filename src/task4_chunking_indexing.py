@@ -1,26 +1,32 @@
 """
 Task 4 — Chunking & Indexing vào Vector Store.
 
+Chủ đề dữ liệu: tuyển sinh đại học / điểm chuẩn (không phải e-commerce Shopee
+như ví dụ mẫu trong README) — văn bản chủ yếu là bảng điểm chuẩn theo
+trường/ngành/tổ hợp môn, danh sách quy định tuyển sinh.
+
 Lựa chọn cho bài này:
-    - Chunking: SemanticChunker (langchain_experimental) — tách đoạn dựa trên
-      độ tương đồng embedding giữa các câu liền kề, thay vì cắt cứng theo số
-      ký tự. Phù hợp với văn bản chính sách/pháp lý vì giữ trọn vẹn từng
-      điều khoản/ý nghĩa thay vì cắt giữa câu.
+    - Chunking: RecursiveCharacterTextSplitter (langchain-text-splitters) —
+      cắt theo độ dài ký tự cố định, ưu tiên tách tại ranh giới đoạn/dòng
+      trước ("\\n\\n" → "\\n" → ". " → " " → ""). Chọn splitter này thay vì
+      SemanticChunker vì dữ liệu điểm chuẩn chủ yếu là bảng/danh sách ngắn,
+      không có nhiều "ý ngữ nghĩa" để SemanticChunker phân biệt breakpoint —
+      recursive splitter đơn giản, nhanh, không tốn thêm lần gọi embedding
+      (SemanticChunker cần embed từng câu để đo similarity, tốn API call hơn
+      hẳn mà không mang lại lợi ích rõ rệt cho dạng bảng số liệu).
     - Embedding: OpenAI text-embedding-3-small (1536 dim) — dùng chung 1 model
-      cho cả bước chunking (SemanticChunker cần embedding để đo similarity)
-      và bước embed_chunks/semantic_search, tránh lệch không gian vector.
+      cho cả embed_chunks() và semantic_search() ở Task 5, tránh lệch không
+      gian vector.
     - Vector Store: ChromaDB, persistent local tại chroma_db/.
 
-CHUNK_SIZE / CHUNK_OVERLAP ở đây KHÔNG điều khiển SemanticChunker trực tiếp
-(SemanticChunker tự quyết định điểm cắt theo ngữ nghĩa, không theo độ dài cố
-định). Hai giá trị này đóng vai trò "safety net": nếu 1 semantic chunk vượt
-quá CHUNK_SIZE (đoạn văn quá dài không có breakpoint ngữ nghĩa rõ ràng), nó
-sẽ được cắt tiếp bằng RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE,
-chunk_overlap=CHUNK_OVERLAP) để đảm bảo không có chunk nào quá lớn so với
-context window của embedding/LLM.
+CHUNK_SIZE=500 / CHUNK_OVERLAP=50: chunk_size=500 ký tự đủ để chứa trọn 1 mục
+điểm chuẩn (tên trường + ngành + tổ hợp môn + điểm) mà không cắt giữa dòng dữ
+liệu; overlap=50 giữ lại một phần tiêu đề/tên trường ở đầu bảng khi bảng dài bị
+chia thành nhiều chunk, để chunk sau vẫn còn ngữ cảnh "đang nói về trường nào"
+thay vì chỉ còn số điểm trơ trọi không rõ nguồn.
 
 Cài đặt:
-    pip install langchain-text-splitters langchain-experimental langchain-openai chromadb openai python-dotenv
+    pip install langchain-text-splitters langchain-openai chromadb openai python-dotenv
 
 Lưu ý quan trọng: nếu sau này đổi corpus (đổi chủ đề, thêm/bớt tài liệu), phải XÓA
 chroma_db/ cũ trước khi reindex — nếu không, chunk cũ và mới sẽ tồn tại lẫn lộn
@@ -42,21 +48,16 @@ CHROMA_DIR = Path(__file__).parent.parent / "chroma_db"
 # CONFIGURATION
 # =============================================================================
 
-CHUNKING_METHOD = "semantic"  # "recursive" | "markdown_header" | "semantic"
+CHUNKING_METHOD = "recursive"  # "recursive" | "markdown_header" | "semantic"
 
-# Safety-net cho SemanticChunker (xem giải thích ở docstring đầu file).
-CHUNK_SIZE = 800        # Ngưỡng tối đa (ký tự) trước khi fallback-split 1 semantic chunk quá dài
-CHUNK_OVERLAP = 100     # Overlap dùng khi fallback-split, giữ ngữ cảnh giữa các mảnh bị cắt cứng
-
-# SemanticChunker breakpoint config
-BREAKPOINT_THRESHOLD_TYPE = "percentile"  # "percentile" | "standard_deviation" | "interquartile"
-BREAKPOINT_THRESHOLD_AMOUNT = 95          # Càng cao → càng ít breakpoint → chunk càng to
+CHUNK_SIZE = 500        # Xem giải thích lựa chọn ở docstring đầu file
+CHUNK_OVERLAP = 50      # Xem giải thích lựa chọn ở docstring đầu file
 
 EMBEDDING_MODEL = "text-embedding-3-small"  # OpenAI — 1536 dim, chất lượng tốt, chi phí thấp
 EMBEDDING_DIM = 1536
 
 VECTOR_STORE = "chromadb"  # "chromadb" | "weaviate" | "faiss"
-COLLECTION_NAME = "ecommerce_support_docs"
+COLLECTION_NAME = "admission_scores_docs"
 
 
 # =============================================================================
@@ -70,9 +71,8 @@ _chroma_collection = None
 
 def get_embedding_model():
     """
-    Trả về instance OpenAIEmbeddings dùng chung cho chunking (SemanticChunker),
-    embed_chunks(), và semantic_search() ở Task 5 — đảm bảo cùng 1 không gian
-    vector.
+    Trả về instance OpenAIEmbeddings dùng chung cho embed_chunks() và
+    semantic_search() ở Task 5 — đảm bảo cùng 1 không gian vector.
     """
     global _embeddings_instance
     if _embeddings_instance is None:
@@ -141,22 +141,16 @@ def load_documents() -> list[dict]:
 
 def chunk_documents(documents: list[dict]) -> list[dict]:
     """
-    Chunk documents bằng SemanticChunker (ngữ nghĩa), với fallback cắt cứng
-    (RecursiveCharacterTextSplitter) cho các đoạn vượt quá CHUNK_SIZE.
+    Chunk documents bằng RecursiveCharacterTextSplitter (xem lý do lựa chọn ở
+    docstring đầu file — dữ liệu điểm chuẩn dạng bảng/danh sách, không cần
+    tách theo ngữ nghĩa như SemanticChunker).
 
     Returns:
         List of {'content': str, 'metadata': dict} — mỗi item là 1 chunk
     """
-    from langchain_experimental.text_splitter import SemanticChunker
     from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-    embeddings = get_embedding_model()
-    semantic_splitter = SemanticChunker(
-        embeddings,
-        breakpoint_threshold_type=BREAKPOINT_THRESHOLD_TYPE,
-        breakpoint_threshold_amount=BREAKPOINT_THRESHOLD_AMOUNT,
-    )
-    fallback_splitter = RecursiveCharacterTextSplitter(
+    splitter = RecursiveCharacterTextSplitter(
         chunk_size=CHUNK_SIZE,
         chunk_overlap=CHUNK_OVERLAP,
         separators=["\n\n", "\n", ". ", " ", ""],
@@ -164,16 +158,8 @@ def chunk_documents(documents: list[dict]) -> list[dict]:
 
     chunks = []
     for doc in documents:
-        raw_splits = semantic_splitter.split_text(doc["content"])
-
-        final_splits = []
-        for piece in raw_splits:
-            if len(piece) > CHUNK_SIZE:
-                final_splits.extend(fallback_splitter.split_text(piece))
-            else:
-                final_splits.append(piece)
-
-        for i, chunk_text in enumerate(final_splits):
+        splits = splitter.split_text(doc["content"])
+        for i, chunk_text in enumerate(splits):
             chunks.append({
                 "content": chunk_text,
                 "metadata": {**doc["metadata"], "chunk_index": i},
@@ -217,7 +203,7 @@ def run_pipeline():
     """Chạy toàn bộ pipeline: load → chunk → embed → index."""
     print("=" * 50)
     print("Task 4: Chunking & Indexing")
-    print(f"  Chunking: {CHUNKING_METHOD} (safety-net size={CHUNK_SIZE}, overlap={CHUNK_OVERLAP})")
+    print(f"  Chunking: {CHUNKING_METHOD} (chunk_size={CHUNK_SIZE}, overlap={CHUNK_OVERLAP})")
     print(f"  Embedding: {EMBEDDING_MODEL} (dim={EMBEDDING_DIM})")
     print(f"  Vector Store: {VECTOR_STORE} -> {CHROMA_DIR}")
     print("=" * 50)
