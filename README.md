@@ -550,7 +550,120 @@ run_dashboard()
 ### Kiến Trúc Hệ Thống
 
 ```
-[Vẽ diagram kiến trúc ở đây]
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                          RAG PIPELINE ARCHITECTURE                                 │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ DATA COLLECTION LAYER (Task 1-3)                                                   │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  Task 1: Legal Docs        Task 2: News Articles      Task 3: Markdown Conversion   │
+│  ─────────────────         ──────────────────         ────────────────────────      │
+│  📄 Điểm.xlsx              📰 article.xlsx            📝 MarkItDown                 │
+│  ↓                         ↓                          ↓                              │
+│  Crawl HTML                Crawl HTML (async)         Convert Files                 │
+│  ↓                         ↓                          ↓                              │
+│  PDF Generation            JSON Structuring           Markdown Output               │
+│  ↓                         ↓                          ↓                              │
+│  data/landing/legal/       data/landing/news/         data/standardized/            │
+│  (3 PDF files)             (5 JSON files)             (8 MD files)                  │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ PROCESSING LAYER (Task 4-8)                                                        │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  Task 4: Chunking & Indexing                                                       │
+│  ├─ Split documents into chunks (RecursiveCharacterTextSplitter)                   │
+│  ├─ Generate embeddings (sentence-transformers/BAAI/bge-m3)                        │
+│  └─ Index to ChromaDB → chroma_db/                                                 │
+│                                                                                      │
+│  ┌─────────────────────┐    ┌─────────────────────┐    ┌──────────────────────┐   │
+│  │  Task 5             │    │  Task 6             │    │  Task 7              │   │
+│  │  Semantic Search    │    │  Lexical Search     │    │  Reranking           │   │
+│  │  ─────────────────  │    │  ─────────────────  │    │  ──────────────      │   │
+│  │  Vector DB (Dense)  │    │  BM25 (Sparse)      │    │  Cross-encoder       │   │
+│  │  Cosine Similarity  │    │  Keyword Matching   │    │  Relevance Scoring   │   │
+│  └─────────────────────┘    └─────────────────────┘    └──────────────────────┘   │
+│           ↓                          ↓                           ↓                   │
+│      Top 10 chunks              Top 10 chunks            Merged & Re-ranked        │
+│                                                                                      │
+│  Task 8: Vectorless Fallback (PageIndex)                                          │
+│  └─ Alternative search if hybrid search < threshold                               │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ RETRIEVAL & GENERATION LAYER (Task 9-10)                                          │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  Task 9: Retrieval Pipeline                                                        │
+│  ┌─────────────────────────────────────────────────────────────────────┐           │
+│  │ Query Input                                                         │           │
+│  │    ↓                                                                 │           │
+│  │ ┌─Semantic Search─┐  ┌─Lexical Search─┐                           │           │
+│  │ │   (Dense)       │  │    (Sparse)     │                           │           │
+│  │ └────────┬────────┘  └────────┬────────┘                           │           │
+│  │          │                     │                                    │           │
+│  │          └─────────┬───────────┘                                    │           │
+│  │                    ↓                                                │           │
+│  │            Merge Results (RRF)                                     │           │
+│  │                    ↓                                                │           │
+│  │            Rerank Candidates                                       │           │
+│  │                    ↓                                                │           │
+│  │         Score > Threshold?                                         │           │
+│  │         Yes ↓              No ↓                                     │           │
+│  │      Return Top-K    Fallback: PageIndex                           │           │
+│  └─────────────────────────────────────────────────────────────────────┘           │
+│                                                                                      │
+│  Task 10: Generation with Citation                                                 │
+│  ├─ Reorder chunks (Lost-in-the-Middle pattern)                                   │
+│  ├─ Format context with source metadata                                           │
+│  ├─ Inject into LLM prompt                                                        │
+│  ├─ Generate answer with citations                                               │
+│  └─ Output: Answer + [Source, Year] citations                                    │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│ APPLICATION LAYER (Group Project)                                                  │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                      │
+│  ┌─────────────────────────────────────┐      ┌──────────────────────────────┐    │
+│  │  RAG Chatbot UI                     │      │  Evaluation Pipeline         │    │
+│  │  ───────────────────────────────   │      │  ────────────────────────    │    │
+│  │  • Streamlit/Gradio/Chainlit       │      │  • Golden Dataset (15 Q&A)   │    │
+│  │  • Multi-turn conversation         │      │  • DeepEval/RAGAS/TruLens   │    │
+│  │  • Display sources & scores        │      │  • Metrics: Faithfulness,   │    │
+│  │  • Follow-up questions             │      │    Answer Relevancy,        │    │
+│  │                                    │      │    Context Recall/Precision  │    │
+│  │  Users ←→ Query ←→ Pipeline        │      │  • A/B Testing (2+ configs) │    │
+│  │           ↓                        │      │  • Results Report           │    │
+│  │       Retrieval (Task 9)           │      └──────────────────────────────┘    │
+│  │           ↓                        │                                          │
+│  │       Generation (Task 10)         │                                          │
+│  │           ↓                        │                                          │
+│  │       Response + Citations         │                                          │
+│  └─────────────────────────────────────┘                                          │
+│                                                                                      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+
+DATA FLOW SUMMARY
+─────────────────
+Legal Docs (PDF)  ──┐
+News Articles     ──→ Markdown Conversion → Chunking → Vector Index (ChromaDB)
+(JSON)            ──┘                        ↓
+                                      Semantic + Lexical Search
+                                             ↓
+                                        Reranking
+                                             ↓
+                                        Retrieval Pipeline
+                                             ↓
+                                      LLM Generation
+                                             ↓
+                                      Answer with Citations
 ```
 
 ---
@@ -559,10 +672,19 @@ run_dashboard()
 
 | Thành viên | MSSV | Nhiệm vụ | Trạng thái |
 |-----------|------|----------|------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| **Trần Duy Khánh** | 2003 | **Lead Developer** - Task 1-3 (Data Collection), Task 4-6 (Indexing & Search) | ✅ Hoàn thành |
+| **Nguyễn Văn A** | XXXX | **Backend Developer** - Task 7-9 (Reranking & Retrieval), ChromaDB Setup | ⏳ Đang làm |
+| **Phạm Thị B** | XXXX | **LLM Integration** - Task 10 (Generation), Prompt Engineering | ⏳ Đang làm |
+| **Lê Minh C** | XXXX | **QA & Evaluation** - Golden Dataset, RAGAS Evaluation, A/B Testing | ⏳ Đang làm |
+| **Hoàng Đức D** | XXXX | **UI/UX & Deployment** - Chatbot Interface (Streamlit/Chainlit), Demo | ⏳ Chuẩn bị |
+
+**Ghi chú:**
+- **Task 1-3:** Thu thập dữ liệu, làm sạch, chuẩn hóa (Leader hoàn thành ✅)
+- **Task 4-6:** Indexing, semantic search, lexical search (Leader + Backend dev)
+- **Task 7-9:** Reranking, retrieval pipeline, fallback strategy (Backend dev)
+- **Task 10:** Generation, citation, answer formatting (LLM specialist)
+- **Chatbot:** Tích hợp UI, demonstration, user testing (UI/UX + Deployment)
+- **Evaluation:** Tạo golden dataset, chạy metrics, phân tích kết quả (QA lead)
 
 ---
 
