@@ -670,21 +670,51 @@ News Articles     ──→ Markdown Conversion → Chunking → Vector Index (C
 
 ### Phân Công Công Việc
 
-| Thành viên | MSSV | Nhiệm vụ | Trạng thái |
-|-----------|------|----------|------------|
-| **Trần Duy Khánh** | 2003 | **Lead Developer** - Task 1-3 (Data Collection), Task 4-6 (Indexing & Search) | ✅ Hoàn thành |
-| **Nguyễn Văn A** | XXXX | **Backend Developer** - Task 7-9 (Reranking & Retrieval), ChromaDB Setup | ⏳ Đang làm |
-| **Phạm Thị B** | XXXX | **LLM Integration** - Task 10 (Generation), Prompt Engineering | ⏳ Đang làm |
-| **Lê Minh C** | XXXX | **QA & Evaluation** - Golden Dataset, RAGAS Evaluation, A/B Testing | ⏳ Đang làm |
-| **Hoàng Đức D** | XXXX | **UI/UX & Deployment** - Chatbot Interface (Streamlit/Chainlit), Demo | ⏳ Chuẩn bị |
+| Thành viên                 |  MSSV | Vai trò                          | Nhiệm vụ chính                                                                                                                   |  Trạng thái  |
+| -------------------------- | ----: | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | :----------: |
+| **Trần Duy Khánh**         | 01696 | **Team Leader & RAG Architect**  | Quản lý tiến độ; thiết kế kiến trúc RAG; kiểm tra chunking, embedding, Hybrid Search, RRF; tích hợp và kiểm thử toàn bộ hệ thống | ✅ Hoàn thành |
+| **Nguyễn Hùng Phát**       | 01094 | **Data & Pipeline Specialist**   | Thu thập và chuẩn hóa dữ liệu; xây dựng ChromaDB; hoàn thiện reranking, retrieval pipeline và fallback logic                     | ✅ Hoàn thành |
+| **Lê Nhật Hoàng**          | 01128 | **QA & Evaluation Engineer**     | Chuyển đổi, kiểm tra dữ liệu; xây dựng Golden Dataset; kiểm thử; đánh giá RAGAS và thực hiện A/B Testing                         | ✅ Hoàn thành |
+| **Phạm Nguyễn Khánh Minh** | 02040 | **Frontend & Chatbot Developer** | Phát triển chức năng tìm kiếm và generation; xây dựng giao diện chatbot Streamlit; tích hợp PageIndex và trình diễn sản phẩm     | ✅ Hoàn thành |
+
 
 **Ghi chú:**
-- **Task 1-3:** Thu thập dữ liệu, làm sạch, chuẩn hóa (Leader hoàn thành ✅)
-- **Task 4-6:** Indexing, semantic search, lexical search (Leader + Backend dev)
-- **Task 7-9:** Reranking, retrieval pipeline, fallback strategy (Backend dev)
-- **Task 10:** Generation, citation, answer formatting (LLM specialist)
-- **Chatbot:** Tích hợp UI, demonstration, user testing (UI/UX + Deployment)
-- **Evaluation:** Tạo golden dataset, chạy metrics, phân tích kết quả (QA lead)
+* **Task 1–3:** Thu thập, làm sạch và chuẩn hóa dữ liệu.
+
+  * Phụ trách chính: **Nguyễn Hùng Phát**
+  * Hỗ trợ crawl dữ liệu: **Phạm Nguyễn Khánh Minh**
+  * Kiểm tra và chuyển đổi dữ liệu: **Lê Nhật Hoàng**
+
+* **Task 4–6:** Chunking, indexing, semantic search và lexical search.
+
+  * Kiến trúc và giám sát: **Trần Duy Khánh**
+  * Chunking, embedding và ChromaDB: **Nguyễn Hùng Phát**
+  * Semantic Search: **Phạm Nguyễn Khánh Minh**
+  * Lexical Search: **Lê Nhật Hoàng**
+
+* **Task 7–9:** Reranking, Hybrid Retrieval và fallback strategy.
+
+  * Phụ trách chính: **Nguyễn Hùng Phát**
+  * Kiến trúc và kiểm tra thuật toán: **Trần Duy Khánh**
+  * Kiểm thử fallback: **Lê Nhật Hoàng**
+
+* **Task 10:** Generation, reordering, citation và answer formatting.
+
+  * Phát triển chức năng: **Phạm Nguyễn Khánh Minh**
+  * Tích hợp vào pipeline: **Nguyễn Hùng Phát**
+  * Kiểm tra citation: **Lê Nhật Hoàng**
+
+* **Chatbot UI:** Xây dựng giao diện, tích hợp pipeline và trình diễn.
+
+  * Phụ trách chính: **Phạm Nguyễn Khánh Minh**
+  * Hỗ trợ tích hợp backend: **Nguyễn Hùng Phát**
+
+* **Evaluation:** Golden Dataset, RAGAS, A/B Testing và phân tích kết quả.
+
+  * Phụ trách chính: **Lê Nhật Hoàng**
+  * Giám sát và tổng hợp báo cáo: **Trần Duy Khánh**
+
+
 
 ---
 
