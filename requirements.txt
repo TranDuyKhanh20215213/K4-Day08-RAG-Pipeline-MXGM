@@ -23,10 +23,13 @@ chromadb>=0.5.0
 rank-bm25>=0.2.2
 scikit-learn>=1.3.0
 
+# Task 7 - Reranking: BAAI/bge-reranker-v2-m3 (local cross-encoder qua sentence-transformers ở trên)
+torch>=2.0.0
+
 # Task 8 - PageIndex (dùng REST API trực tiếp qua requests, không cần SDK)
 reportlab>=4.0.0
 
-# Task 10 - Generation
+# Task 10 - Generation (chỉ dùng OpenAI, gọi thẳng API, không fallback provider khác)
 openai>=1.30.0
 
 # Group project - UI

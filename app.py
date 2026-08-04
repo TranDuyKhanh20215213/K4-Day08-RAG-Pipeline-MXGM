@@ -1,5 +1,5 @@
 """
-RAG Chatbot — E-commerce Support (Starter Template)
+RAG Chatbot — Tư Vấn Tuyển Sinh Đại Học / Điểm Chuẩn
 Streamlit app kết nối RAG Retrieval (Task 9) và Generation (Task 10).
 
 Chạy:
@@ -24,8 +24,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # =============================================================================
 
 st.set_page_config(
-    page_title="E-commerce Support RAG Chatbot",
-    page_icon="🛒",
+    page_title="Tư Vấn Tuyển Sinh & Điểm Chuẩn RAG Chatbot",
+    page_icon="🎓",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -35,18 +35,18 @@ st.set_page_config(
 # =============================================================================
 
 with st.sidebar:
-    st.title("🛒 E-commerce Support RAG")
-    st.caption("Trợ lý hỏi đáp về chính sách thương mại điện tử và hỗ trợ khách hàng (đổi trả, thanh toán, bảo mật, người bán)")
+    st.title("🎓 Tư Vấn Tuyển Sinh Đại Học")
+    st.caption("Trợ lý hỏi đáp về điểm chuẩn, tổ hợp môn xét tuyển, và quy định tuyển sinh của các trường đại học")
 
     st.divider()
 
     st.subheader("💡 Câu hỏi gợi ý")
     suggestions = [
-        "Thời hạn yêu cầu trả hàng/hoàn tiền là bao lâu?",
-        "Shopee hỗ trợ những phương thức thanh toán nào?",
-        "Làm sao để đổi phương thức thanh toán đơn hàng?",
-        "Quy định về đăng bán sản phẩm cho người bán?",
-        "Cách mua hàng trên Shopee của quốc gia khác?",
+        "Điểm chuẩn ngành Y đa khoa của Đại học Y Hà Nội là bao nhiêu?",
+        "Đại học Bách Khoa Hà Nội xét tuyển những tổ hợp môn nào?",
+        "So sánh điểm chuẩn ngành Công nghệ thông tin giữa các trường?",
+        "Điều kiện xét tuyển thẳng vào đại học là gì?",
+        "Điểm chuẩn năm nay tăng hay giảm so với năm trước?",
     ]
     for s in suggestions:
         if st.button(s, use_container_width=True, key=f"sug_{s[:20]}"):
@@ -73,8 +73,8 @@ if "pending_query" not in st.session_state:
 # MAIN CHAT AREA
 # =============================================================================
 
-st.title("🛒 E-commerce Support RAG Chatbot")
-st.caption("Hệ thống hỏi đáp chính sách e-commerce và trợ giúp khách hàng")
+st.title("🎓 Tư Vấn Tuyển Sinh & Điểm Chuẩn RAG Chatbot")
+st.caption("Hệ thống hỏi đáp điểm chuẩn, tổ hợp môn và quy định tuyển sinh đại học")
 
 # Hiển thị lịch sử chat
 for msg in st.session_state.messages:
@@ -95,7 +95,7 @@ for msg in st.session_state.messages:
 # QUERY HANDLING
 # =============================================================================
 
-user_input = st.chat_input("Nhập câu hỏi của bạn về chính sách/hỗ trợ e-commerce...")
+user_input = st.chat_input("Nhập câu hỏi về điểm chuẩn, tổ hợp môn hoặc quy định tuyển sinh...")
 query = user_input or st.session_state.pending_query
 
 if query:
@@ -110,26 +110,25 @@ if query:
     with st.chat_message("assistant"):
         with st.spinner("Đang tìm kiếm tài liệu và tổng hợp câu trả lời..."):
             try:
-                # TODO (Học viên): Tích hợp hàm sinh câu trả lời từ Task 10
-                # Ví dụ:
-                # from src.task10_generation import generate_with_citation
-                # response = generate_with_citation(query, top_k=top_k)
-                # answer = response["answer"]
-                # sources = response.get("sources", [])
-
                 from src.task10_generation import generate_with_citation
+
                 response = generate_with_citation(query, top_k=top_k)
                 answer = response.get("answer", "Chưa thể trả lời.")
                 sources = response.get("sources", [])
+                llm_provider = response.get("llm_provider", "unknown")
 
             except NotImplementedError:
                 answer = "⚠️ **Task 10 chưa được implement.** Hãy hoàn thành `src/task10_generation.py` để kết nối pipeline vào UI!"
                 sources = []
+                llm_provider = "none"
             except Exception as e:
                 answer = f"❌ **Lỗi khi chạy RAG Pipeline:** {e}"
                 sources = []
+                llm_provider = "none"
 
             st.markdown(answer)
+            if llm_provider not in ("none", "unknown"):
+                st.caption(f"🔌 LLM provider: `{llm_provider}`")
 
             if sources:
                 with st.expander(f"📚 Nguồn tham khảo ({len(sources)} chunks)"):

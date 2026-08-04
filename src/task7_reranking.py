@@ -1,9 +1,10 @@
 """
 Task 7 — Reranking Module.
 
-Phương pháp chính: Cross-encoder reranker qua Jina Reranker API
-(`jina-reranker-v2-base-multilingual`) — multilingual, tốt cho tiếng Việt,
-không cần host model local.
+Phương pháp chính: Cross-encoder reranker `BAAI/bge-reranker-v2-m3`, chạy
+LOCAL qua `sentence-transformers.CrossEncoder` — multilingual (tốt cho tiếng
+Việt), không cần API key/gọi mạng ngoài (khác với Jina reranker trước đó).
+Model được tải về từ HuggingFace ở lần chạy đầu tiên (~1.1GB) và cache lại.
 
 MMR và RRF vẫn được implement đầy đủ bên dưới vì Task 9 (hybrid retrieval)
 cần RRF để merge kết quả semantic_search + lexical_search trước khi đưa qua
@@ -15,25 +16,29 @@ bất kể nội dung đó có thật sự liên quan đến câu hỏi hay khô
 quyết định fallback ở Task 9 — dùng cosine score gốc từ Task 5.
 
 Cài đặt:
-    pip install requests python-dotenv
+    pip install sentence-transformers torch
 """
 
-import os
+import math
 
-import requests
-from dotenv import load_dotenv
+_reranker_model = None
 
-load_dotenv()
 
-JINA_API_URL = "https://api.jina.ai/v1/rerank"
-JINA_MODEL = "jina-reranker-v2-base-multilingual"
+def _get_reranker_model():
+    """Lazy-load + cache CrossEncoder BAAI/bge-reranker-v2-m3 (chỉ tải/load 1 lần)."""
+    global _reranker_model
+    if _reranker_model is None:
+        from sentence_transformers import CrossEncoder
+
+        _reranker_model = CrossEncoder("BAAI/bge-reranker-v2-m3", max_length=512)
+    return _reranker_model
 
 
 def rerank_cross_encoder(
     query: str, candidates: list[dict], top_k: int = 5
 ) -> list[dict]:
     """
-    Rerank candidates bằng Jina Reranker v2 (cross-encoder, multilingual).
+    Rerank candidates bằng BAAI/bge-reranker-v2-m3 (cross-encoder, multilingual, local).
 
     Args:
         query: Câu truy vấn
@@ -41,48 +46,33 @@ def rerank_cross_encoder(
         top_k: Số lượng kết quả sau rerank
 
     Returns:
-        List of top_k candidates, re-scored bằng relevance_score của Jina,
-        sorted descending. Nếu thiếu JINA_API_KEY hoặc API lỗi, fallback về
-        thứ tự score gốc (không crash pipeline).
+        List of top_k candidates, re-scored bằng relevance score của model
+        (sigmoid của raw logit, về khoảng [0,1]), sorted descending. Nếu
+        model chưa cài được (thiếu sentence-transformers/torch, hoặc lỗi tải
+        weights), fallback về thứ tự score gốc thay vì crash pipeline.
     """
     if not candidates:
         return []
-
-    documents = [c["content"] for c in candidates]
-    api_key = os.getenv("JINA_API_KEY")
 
     def _fallback(reason: str) -> list[dict]:
         print(f"⚠ rerank_cross_encoder fallback ({reason}) — giữ nguyên score gốc.")
         return sorted(candidates, key=lambda c: c.get("score", 0.0), reverse=True)[:top_k]
 
-    if not api_key:
-        return _fallback("thiếu JINA_API_KEY trong .env")
-
     try:
-        response = requests.post(
-            JINA_API_URL,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": JINA_MODEL,
-                "query": query,
-                "documents": documents,
-                "top_n": min(top_k, len(documents)),
-            },
-            timeout=20,
-        )
-        response.raise_for_status()
-        reranked = response.json()["results"]
-    except (requests.RequestException, KeyError, ValueError) as e:
-        return _fallback(f"lỗi gọi Jina API: {e}")
+        model = _get_reranker_model()
+        pairs = [(query, c["content"]) for c in candidates]
+        raw_scores = model.predict(pairs)
+    except Exception as e:
+        return _fallback(f"lỗi load/chạy bge-reranker-v2-m3: {e}")
 
     results = []
-    for r in reranked:
-        original = candidates[r["index"]]
-        results.append({**original, "score": r["relevance_score"]})
-    return results
+    for candidate, raw in zip(candidates, raw_scores):
+        # bge-reranker-v2-m3 trả về raw logit -> sigmoid để chuẩn hoá về [0,1]
+        score = 1.0 / (1.0 + math.exp(-float(raw)))
+        results.append({**candidate, "score": score})
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:top_k]
 
 
 def _cosine_sim(a: list[float], b: list[float]) -> float:
@@ -193,7 +183,7 @@ def rerank(
     **kwargs,
 ) -> list[dict]:
     """
-    Unified reranking interface. Mặc định dùng Jina cross-encoder reranker.
+    Unified reranking interface. Mặc định dùng bge-reranker-v2-m3 (cross-encoder, local).
 
     Args:
         query: Câu truy vấn
