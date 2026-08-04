@@ -1,17 +1,77 @@
 [
   {
-    "question": "Người mua có thể yêu cầu trả hàng/hoàn tiền trong thời hạn bao lâu sau khi nhận hàng?",
-    "expected_answer": "Trong vòng 15 ngày kể từ khi giao hàng thành công (24 giờ đối với thực phẩm tươi sống/đông lạnh).",
-    "expected_context": "Trang Returns and Refunds Policy, mục Return/Refund Eligibility"
+    "question": "Năm 2026, Đại học Dược Hà Nội dự kiến tuyển tổng cộng bao nhiêu sinh viên?",
+    "expected_answer": "Đại học Dược Hà Nội dự kiến tuyển tổng cộng 890 sinh viên năm 2026.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Chỉ Tiêu Tuyển Sinh & Ngành Đào Tạo Năm 2026"
   },
   {
-    "question": "Shopee hỗ trợ những phương thức thanh toán nào?",
-    "expected_answer": "ShopeePay Wallet, thẻ tín dụng/ghi nợ, trả góp qua thẻ, QR Code, chuyển khoản qua app ngân hàng, thẻ NAPAS, Apple Pay, Google Pay, và COD.",
-    "expected_context": "Trang Payment Methods Overview"
+    "question": "Ngành Dược học của HUP năm 2026 có mã ngành nào và bao nhiêu chỉ tiêu?",
+    "expected_answer": "Ngành Dược học có mã 7720201 và 680 chỉ tiêu.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Phân bổ chỉ tiêu chi tiết năm 2026"
   },
   {
-    "question": "Người bán không được đăng bán những sản phẩm nào?",
-    "expected_answer": "Hàng giả/nhái, sản phẩm bất hợp pháp, vi phạm sở hữu trí tuệ, và các mặt hàng nằm trong danh sách cấm của sàn.",
-    "expected_context": "Trang Product Listing Regulations, mục Prohibited Content"
+    "question": "Nếu không xét ngành Dược học, ba ngành còn lại của Đại học Dược Hà Nội được giao chỉ tiêu ra sao?",
+    "expected_answer": "Hóa dược, Hóa học và Công nghệ sinh học mỗi ngành có 70 chỉ tiêu.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Phân bổ chỉ tiêu chi tiết năm 2026"
+  },
+  {
+    "question": "Thí sinh xét tuyển kết hợp PT2A, PT2B hoặc PT2C ở Đại học Dược Hà Nội cần đáp ứng điều kiện điểm THPT tối thiểu nào?",
+    "expected_answer": "Thí sinh cần đạt tổng điểm thi tốt nghiệp THPT 2026 từ 19.0 điểm trở lên, không tính điểm khuyến khích.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Phương thức 2 - xét tuyển kết hợp"
+  },
+  {
+    "question": "Ngành Công nghệ sinh học của Đại học Dược Hà Nội xét tuyển bằng các tổ hợp môn nào?",
+    "expected_answer": "Ngành Công nghệ sinh học xét tuyển tổ hợp B00 và B08.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Bổ sung tổ hợp xét tuyển mới năm 2026"
+  },
+  {
+    "question": "Điểm sàn thi THPT năm 2026 của ngành Dược học tại Đại học Dược Hà Nội là bao nhiêu?",
+    "expected_answer": "Điểm sàn thi THPT năm 2026 của ngành Dược học là 22.0 điểm.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Ngưỡng Đảm Bảo Chất Lượng Đầu Vào năm 2026"
+  },
+  {
+    "question": "Mức học phí dự kiến cho ngành Hóa dược của Đại học Dược Hà Nội là bao nhiêu một năm học?",
+    "expected_answer": "Học phí dự kiến của ngành Hóa dược là 18,500,000 VNĐ một năm học.",
+    "expected_context": "admissions_duoc_hanoi (1).md, mục Mức Học Phí Năm Học 2024-2026"
+  },
+  {
+    "question": "Theo phương thức thi THPT, ngành Hóa học của Đại học Dược Hà Nội có điểm chuẩn 2025 là bao nhiêu?",
+    "expected_answer": "Ngành Hóa học có điểm chuẩn 2025 theo điểm thi THPT là 20.85.",
+    "expected_context": "admissions_duoc_hanoi (1).md, bảng Điểm Chuẩn 2025 Theo Điểm Thi THPT"
+  },
+  {
+    "question": "Ở chương trình tiêu chuẩn HCMUT, mã ngành 106 tương ứng ngành nào?",
+    "expected_answer": "Mã ngành 106 tương ứng ngành Khoa học Máy tính.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, mục Chương trình tiêu chuẩn"
+  },
+  {
+    "question": "Khoa học Máy tính mã 106 của HCMUT có chỉ tiêu năm 2026 và điểm chuẩn 2025 như thế nào?",
+    "expected_answer": "Khoa học Máy tính mã 106 có 240 chỉ tiêu năm 2026 và điểm chuẩn 2025 là 85.41.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, mục Chương trình tiêu chuẩn"
+  },
+  {
+    "question": "Nhóm ngành mã 108 của HCMUT có bao nhiêu chỉ tiêu?",
+    "expected_answer": "Nhóm ngành mã 108 có 670 chỉ tiêu.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, mục Chương trình tiêu chuẩn"
+  },
+  {
+    "question": "Điểm chuẩn 2025 của ngành Khoa học Dữ liệu mã 146 tại HCMUT là bao nhiêu?",
+    "expected_answer": "Ngành Khoa học Dữ liệu mã 146 có điểm chuẩn 2025 là 83.85.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, mục Chương trình tiêu chuẩn"
+  },
+  {
+    "question": "Trong chương trình dạy và học bằng tiếng Anh của HCMUT, Logistics và Quản lý Chuỗi Cung ứng có mã ngành nào?",
+    "expected_answer": "Logistics và Quản lý Chuỗi Cung ứng trong chương trình dạy và học bằng tiếng Anh có mã 228.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, mục Chương trình dạy và học bằng tiếng Anh"
+  },
+  {
+    "question": "Chương trình liên kết Cử nhân Kỹ thuật Quốc tế của HCMUT có ngành Trí tuệ Nhân tạo mã 406 với điểm chuẩn 2025 bao nhiêu?",
+    "expected_answer": "Ngành Trí tuệ Nhân tạo mã 406 có điểm chuẩn 2025 là 65.50.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, mục Chương trình liên kết Cử nhân Kỹ thuật Quốc tế"
+  },
+  {
+    "question": "Khi một ngành của HCMUT có nhiều tổ hợp xét tuyển, hệ thống xử lý điểm tổ hợp như thế nào?",
+    "expected_answer": "Các tổ hợp môn được xét điểm ngang nhau và hệ thống tự chọn tổ hợp có điểm cao nhất cho thí sinh.",
+    "expected_context": "HCMUT_Nganh_Chi_Tieu_Diem_Chuan.md, phần Lưu ý về tổ hợp xét tuyển"
   }
 ]
